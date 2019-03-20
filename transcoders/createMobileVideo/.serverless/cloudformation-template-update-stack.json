@@ -1,0 +1,347 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "CreateMobileVideoLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/lambda-media-transcoder-mobile-video-dev-createMobileVideo"
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "lambda-media-transcoder-mobile-video",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-media-transcoder-mobile-video-dev-createMobileVideo:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-media-transcoder-mobile-video-dev-createMobileVideo:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:GetObject"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "/",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "CreateMobileVideoBucket",
+                              "Arn"
+                            ]
+                          },
+                          "*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "lambda-media-transcoder-mobile-video",
+              "dev",
+              "eu-central-1",
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "CreateMobileVideoLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/lambda-media-transcoder-mobile-video/dev/1553089809933-2019-03-20T13:50:09.933Z/lambda-media-transcoder-mobile-video.zip"
+        },
+        "FunctionName": "lambda-media-transcoder-mobile-video-dev-createMobileVideo",
+        "Handler": "createMobileVideo.handler",
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs8.10",
+        "Timeout": 10,
+        "Environment": {
+          "Variables": {
+            "REGION": "eu-central-1",
+            "BUCKET_MOBILE_VIDEO": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "lambda-media-mobile-video"
+                ]
+              ]
+            },
+            "SNS_TOPIC_MEDIA_SOURCE": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "lambda-media-source-topic"
+                ]
+              ]
+            },
+            "SNS_TOPIC_MEDIA_SOURCE_ARN": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:sns:",
+                  "eu-central-1",
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "lambda-media-source-topic"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        "Layers": [
+          {
+            "Fn::ImportValue": "FfmpegLambdaLayer"
+          }
+        ]
+      },
+      "DependsOn": [
+        "CreateMobileVideoLogGroup",
+        "IamRoleLambdaExecution"
+      ]
+    },
+    "CreateMobileVideoBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Fn::Join": [
+            "-",
+            [
+              "dev",
+              "lambda-media-mobile-video"
+            ]
+          ]
+        },
+        "CorsConfiguration": {
+          "CorsRules": [
+            {
+              "AllowedMethods": [
+                "PUT",
+                "GET",
+                "POST",
+                "HEAD"
+              ],
+              "AllowedOrigins": [
+                "*"
+              ],
+              "AllowedHeaders": [
+                "*"
+              ]
+            }
+          ]
+        },
+        "AccessControl": "PublicRead"
+      }
+    },
+    "CreateMobileVideoSubscription": {
+      "Type": "AWS::SNS::Subscription",
+      "Properties": {
+        "Endpoint": {
+          "Fn::GetAtt": [
+            "CreateMobileVideoLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Protocol": "lambda",
+        "TopicArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:sns:",
+              "eu-central-1",
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "dev",
+                    "lambda-media-source-topic"
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "CreateMobileVideoLambdaFunctionPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "Principal": "sns.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:sns:",
+              "eu-central-1",
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "dev",
+                    "lambda-media-source-topic"
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "CreateMobileVideoLambdaFunction",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "CreateMobileVideoBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Sid": "PublicReadForGetBucketObjects",
+              "Effect": "Allow",
+              "Principal": "*",
+              "Action": [
+                "s3:GetObject"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "/",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "CreateMobileVideoBucket",
+                          "Arn"
+                        ]
+                      },
+                      "*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Bucket": {
+          "Ref": "CreateMobileVideoBucket"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    }
+  }
+}

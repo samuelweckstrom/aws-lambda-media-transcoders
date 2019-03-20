@@ -1,0 +1,58 @@
+Resources:
+  MediaSourceTopic: # Create a topic
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE}
+
+  MediaSourceTopicPolicy: # Create a policy for S3 to publish a SNS message
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowBucketToPushNotificationEffect
+          Effect: Allow
+          Principal:
+            Service: s3.amazonaws.com
+          Action: sns:Publish
+          Resource: "*"
+      Topics:
+        - Ref: MediaSourceTopic
+
+  MediaSourceBucket: # Create a bucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:provider.environment.BUCKET_MEDIA_SOURCE}
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: s3:ObjectCreated:*
+            Topic:
+              Ref: MediaSourceTopic
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            AllowedHeaders:
+              - "*"
+      AccessControl: PublicReadWrite
+
+  MediaSourceBucketPolicy: # give public permission to access bucket contents
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          Sid: PublicReadForGetBucketObjects
+          Effect: Allow
+          Principal: "*"
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource:
+            - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "MediaSourceBucket", "Arn" ] }, "*" ]] }
+      Bucket:
+        Ref: "MediaSourceBucket"

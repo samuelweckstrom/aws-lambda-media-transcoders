@@ -1,0 +1,32 @@
+service: ${file(../project.env.yml):PROJECT_NAME}-transcoder-source
+
+provider:
+  name: aws
+  stage: dev
+  region: ${file(../project.env.yml):REGION}
+  runtime: nodejs8.10
+  versionFunctions: false
+  timeout: 10
+  memorySize: 512
+  # Use the below setting to deploy to a custom bucket. Will require the bucket to be created manually though.
+  # deploymentBucket: ${self:provider.stage}-${file(../project.env.yml):PROJECT_NAME}-transcoder-deployment
+  package:
+    excludeDevDependencies: true
+    exclude:
+      - .git/**
+      - .vscode/**
+      - .test/**
+  environment:
+    REGION: ${self:provider.region}
+    SNS_TOPIC_MEDIA_SOURCE: 
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):SNS_TOPIC_MEDIA_SOURCE}
+    BUCKET_MEDIA_SOURCE: 
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_MEDIA_SOURCE}
+resources:
+  - ${file(./mediaSource.yml)}

@@ -1,0 +1,20 @@
+service: ${file(../../project.env.yml):PROJECT_NAME}-ffmpeg-layer
+
+provider:
+  name: aws
+  versionFunctions: false
+  stage: ${file(../../project.env.yml):STAGE}
+  region: ${file(../../project.env.yml):REGION}
+  deploymentBucket: ${self:provider.stage}-${file(../../project.env.yml):DEPLOYMENT_BUCKET_LAYER_FFMPEG}
+
+layers:
+  ffmpeg:
+    path: ./bin
+
+resources:
+  Outputs:
+    FfmpegLayerExport:
+      Value:
+        Ref: FfmpegLambdaLayer
+      Export:
+        Name: FfmpegLambdaLayer

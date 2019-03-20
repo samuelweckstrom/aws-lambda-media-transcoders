@@ -1,0 +1,49 @@
+Resources:
+  CreateMobileVideoBucket: # Create a bucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:provider.environment.BUCKET_MOBILE_VIDEO}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            AllowedHeaders:
+              - "*"
+      AccessControl: PublicRead
+
+  CreateMobileVideoSubscription: # Subscribe lambda to media in topic
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint:
+        Fn::GetAtt: [ CreateMobileVideoLambdaFunction , "Arn" ]
+      Protocol: lambda
+      TopicArn: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE_ARN}
+
+  CreateMobileVideoLambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE_ARN}
+      FunctionName:
+        Fn::GetAtt: [ CreateMobileVideoLambdaFunction, "Arn" ]
+
+  CreateMobileVideoBucketPolicy: # give public permission to access bucket contents
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:GetObject"
+            Resource:
+              - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateMobileVideoBucket", "Arn" ] }, "*" ]] }
+      Bucket:
+        Ref: "CreateMobileVideoBucket"

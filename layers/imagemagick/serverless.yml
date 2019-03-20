@@ -1,0 +1,20 @@
+service: ${file(../../project.env.yml):PROJECT_NAME}-imagemagick-layer
+
+provider:
+  name: aws
+  versionFunctions: false
+  stage: ${file(../../project.env.yml):STAGE}
+  region: ${file(../../project.env.yml):REGION}
+  deploymentBucket: ${self:provider.stage}-${file(../../project.env.yml):DEPLOYMENT_BUCKET_LAYER_IMAGEMAGICK}
+
+layers:
+  imagemagick:
+    path: ./bin
+
+resources:
+  Outputs:
+    ImagemagickLayerExport:
+      Value:
+        Ref: ImagemagickLambdaLayer
+      Export:
+        Name: ImagemagickLambdaLayer

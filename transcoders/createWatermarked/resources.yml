@@ -1,0 +1,51 @@
+Resources:
+  CreateWatermarkedBucket: # Create a bucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:provider.environment.BUCKET_WATERMARKED}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            AllowedHeaders:
+              - "*"
+      AccessControl: PublicRead
+
+  CreateWatermarkedBucketPolicy: # give public permission to access bucket contents
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateWatermarkedBucket", "Arn" ] }, "*" ]] }
+      Bucket:
+        Ref: "CreateWatermarkedBucket"
+
+
+  CreateWatermarkedSubscription: # Subscribe lambda to topic
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint:
+        Fn::GetAtt: [ CreateWatermarkedLambdaFunction, "Arn" ]
+      Protocol: lambda
+      TopicArn: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE_ARN}
+
+
+  CreateWatermarkedLambdaFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE_ARN}
+      FunctionName:
+        Fn::GetAtt: [ CreateWatermarkedLambdaFunction, "Arn" ]

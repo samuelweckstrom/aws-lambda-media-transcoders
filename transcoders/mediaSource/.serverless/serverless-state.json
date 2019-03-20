@@ -1,0 +1,346 @@
+{
+  "service": {
+    "service": "lambda-media-transcoder-source",
+    "serviceObject": {
+      "name": "lambda-media-transcoder-source"
+    },
+    "provider": {
+      "stage": "dev",
+      "region": "eu-central-1",
+      "variableSyntax": "\\${([ ~:a-zA-Z0-9._@'\",\\-\\/\\(\\)]+?)}",
+      "name": "aws",
+      "runtime": "nodejs8.10",
+      "versionFunctions": false,
+      "timeout": 10,
+      "memorySize": 512,
+      "package": {
+        "excludeDevDependencies": true,
+        "exclude": [
+          ".git/**",
+          ".vscode/**",
+          ".test/**"
+        ]
+      },
+      "environment": {
+        "REGION": "eu-central-1",
+        "SNS_TOPIC_MEDIA_SOURCE": {
+          "Fn::Join": [
+            "-",
+            [
+              "dev",
+              "lambda-media-source-topic"
+            ]
+          ]
+        },
+        "BUCKET_MEDIA_SOURCE": {
+          "Fn::Join": [
+            "-",
+            [
+              "dev",
+              "lambda-media-source-bucket"
+            ]
+          ]
+        }
+      },
+      "remoteFunctionData": null,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "MediaSourceTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+              "TopicName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "dev",
+                    "lambda-media-source-topic"
+                  ]
+                ]
+              }
+            }
+          },
+          "MediaSourceTopicPolicy": {
+            "Type": "AWS::SNS::TopicPolicy",
+            "Properties": {
+              "PolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Sid": "AllowBucketToPushNotificationEffect",
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "s3.amazonaws.com"
+                    },
+                    "Action": "sns:Publish",
+                    "Resource": "*"
+                  }
+                ]
+              },
+              "Topics": [
+                {
+                  "Ref": "MediaSourceTopic"
+                }
+              ]
+            }
+          },
+          "MediaSourceBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "dev",
+                    "lambda-media-source-bucket"
+                  ]
+                ]
+              },
+              "NotificationConfiguration": {
+                "TopicConfigurations": [
+                  {
+                    "Event": "s3:ObjectCreated:*",
+                    "Topic": {
+                      "Ref": "MediaSourceTopic"
+                    }
+                  }
+                ]
+              },
+              "CorsConfiguration": {
+                "CorsRules": [
+                  {
+                    "AllowedMethods": [
+                      "PUT",
+                      "GET",
+                      "POST",
+                      "HEAD"
+                    ],
+                    "AllowedOrigins": [
+                      "*"
+                    ],
+                    "AllowedHeaders": [
+                      "*"
+                    ]
+                  }
+                ]
+              },
+              "AccessControl": "PublicReadWrite"
+            }
+          },
+          "MediaSourceBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "PolicyDocument": {
+                "Statement": {
+                  "Sid": "PublicReadForGetBucketObjects",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:GetObject"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "/",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "MediaSourceBucket",
+                              "Arn"
+                            ]
+                          },
+                          "*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              },
+              "Bucket": {
+                "Ref": "MediaSourceBucket"
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      }
+    },
+    "pluginsData": {},
+    "functions": {},
+    "resources": {
+      "Resources": {
+        "MediaSourceTopic": {
+          "Type": "AWS::SNS::Topic",
+          "Properties": {
+            "TopicName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "lambda-media-source-topic"
+                ]
+              ]
+            }
+          }
+        },
+        "MediaSourceTopicPolicy": {
+          "Type": "AWS::SNS::TopicPolicy",
+          "Properties": {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "AllowBucketToPushNotificationEffect",
+                  "Effect": "Allow",
+                  "Principal": {
+                    "Service": "s3.amazonaws.com"
+                  },
+                  "Action": "sns:Publish",
+                  "Resource": "*"
+                }
+              ]
+            },
+            "Topics": [
+              {
+                "Ref": "MediaSourceTopic"
+              }
+            ]
+          }
+        },
+        "MediaSourceBucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+            "BucketName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "lambda-media-source-bucket"
+                ]
+              ]
+            },
+            "NotificationConfiguration": {
+              "TopicConfigurations": [
+                {
+                  "Event": "s3:ObjectCreated:*",
+                  "Topic": {
+                    "Ref": "MediaSourceTopic"
+                  }
+                }
+              ]
+            },
+            "CorsConfiguration": {
+              "CorsRules": [
+                {
+                  "AllowedMethods": [
+                    "PUT",
+                    "GET",
+                    "POST",
+                    "HEAD"
+                  ],
+                  "AllowedOrigins": [
+                    "*"
+                  ],
+                  "AllowedHeaders": [
+                    "*"
+                  ]
+                }
+              ]
+            },
+            "AccessControl": "PublicReadWrite"
+          }
+        },
+        "MediaSourceBucketPolicy": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "PolicyDocument": {
+              "Statement": {
+                "Sid": "PublicReadForGetBucketObjects",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                  "s3:PutObject",
+                  "s3:GetObject"
+                ],
+                "Resource": [
+                  {
+                    "Fn::Join": [
+                      "/",
+                      [
+                        {
+                          "Fn::GetAtt": [
+                            "MediaSourceBucket",
+                            "Arn"
+                          ]
+                        },
+                        "*"
+                      ]
+                    ]
+                  }
+                ]
+              }
+            },
+            "Bucket": {
+              "Ref": "MediaSourceBucket"
+            }
+          }
+        }
+      },
+      "Outputs": {}
+    },
+    "layers": {}
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/lambda-media-transcoder-source/dev/1552650680953-2019-03-15T11:51:20.953Z",
+    "artifact": ""
+  }
+}

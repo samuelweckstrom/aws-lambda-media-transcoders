@@ -1,0 +1,53 @@
+service: ${file(../project.env.yml):PROJECT_NAME}-transcoder-thumbnails
+
+provider:
+  name: aws
+  stage: dev
+  region: ${file(../project.env.yml):REGION}
+  runtime: nodejs8.10
+  versionFunctions: false
+  timeout: 10
+  memorySize: 512
+  # Use the below setting to deploy to a custom bucket. Will require the bucket to be created manually though.
+  # deploymentBucket: ${self:provider.stage}-${file(../project.env.yml):PROJECT_NAME}-transcoder-deployment
+  package:
+    excludeDevDependencies: true
+    exclude:
+      - .git/**
+      - .vscode/**
+      - .test/**
+  environment:
+    REGION: ${self:provider.region}
+    BUCKET_WATERMARKED:
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_WATERMARKED}
+    SNS_TOPIC_MEDIA_SOURCE:
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):SNS_TOPIC_MEDIA_SOURCE}
+    SNS_TOPIC_MEDIA_SOURCE_ARN:
+      Fn::Join:
+        - ""
+        - - "arn:aws:sns:"
+          - ${self:provider.environment.REGION}
+          - ":"
+          - Ref: AWS::AccountId
+          - ":"
+          - ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource:
+        - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateThumbnailsBucket", "Arn" ] }, "*" ]] }
+functions:
+  createWatermarked:
+    handler: createWatermarked.handler
+    layers:
+      - Fn::ImportValue: FfmpegLambdaLayer
+resources:
+  - ${file(./resources.yml)}

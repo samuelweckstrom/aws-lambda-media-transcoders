@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuremap [
+  <!ELEMENT configuremap (configure)+>
+  <!ATTLIST configuremap xmlns CDATA #FIXED ''>
+  <!ELEMENT configure EMPTY>
+  <!ATTLIST configure xmlns CDATA #FIXED '' name NMTOKEN #REQUIRED
+    value CDATA #REQUIRED>
+]>
+<!--
+  ImageMagick build configuration.
+-->
+<configuremap>
+  <configure name="CC" value="gcc"/>
+  <configure name="CFLAGS" value="-I/usr/include/libpng15       -g -O2 -Wall -mtune=haswell -fexceptions -DMAGICKCORE_HDRI_ENABLE=1 -DMAGICKCORE_QUANTUM_DEPTH=16"/>
+  <configure name="CODER_PATH" value="/var/task/imagemagick/new2/lib/ImageMagick-7.0.8/modules-Q16HDRI/coders"/>
+  <configure name="CONFIGURE_PATH" value="/var/task/imagemagick/new2/etc/ImageMagick-7/"/>
+  <configure name="CONFIGURE" value="./configure  '--enable-shared=no' '--enable-static=yes' '--enable-delegate-build=yes' '--with-modules=no' '--without-threads' '--prefix=/var/task/imagemagick/new2'"/>
+  <configure name="COPYRIGHT" value="Copyright (C) 1999-2019 ImageMagick Studio LLC"/>
+  <configure name="CPPFLAGS" value="-I/var/task/imagemagick/new2/include/ImageMagick-7"/>
+  <configure name="CXXFLAGS" value="-g -O2"/>
+  <configure name="CXX" value="g++"/>
+  <configure name="DEFS" value="-DHAVE_CONFIG_H"/>
+  <configure name="DELEGATES" value="mpeg jng jpeg png tiff zlib"/>
+  <configure name="DISTCHECK_CONFIG_FLAGS" value=" --disable-deprecated  --with-quantum-depth=16  --with-jemalloc=no  --with-umem=no  --with-autotrace=no  --with-gslib=no  --with-fontpath=  --with-rsvg=no  --with-perl=no "/>
+  <configure name="DOCUMENTATION_PATH" value="/var/task/imagemagick/new2/share/doc/ImageMagick-7"/>
+  <configure name="EXEC-PREFIX" value="/var/task/imagemagick/new2"/>
+  <configure name="EXECUTABLE_PATH" value="/var/task/imagemagick/new2/bin"/>
+  <configure name="FEATURES" value="DPC HDRI Cipher"/>
+  <configure name="FILTER_PATH" value="/var/task/imagemagick/new2/lib/ImageMagick-7.0.8/modules-Q16HDRI/filters"/>
+  <configure name="GIT_REVISION" value="15233" />
+  <configure name="HOST" value="x86_64-pc-linux-gnu"/>
+  <configure name="INCLUDE_PATH" value="/var/task/imagemagick/new2/include/ImageMagick-7"/>
+  <configure name="LDFLAGS" value="-L/var/task/imagemagick/new2/lib "/>
+  <configure name="LIBRARY_PATH" value="/var/task/imagemagick/new2/lib/ImageMagick-7.0.8"/>
+  <configure name="LIBS" value="   -ltiff   -ljpeg   -lpng15                           -lz       -lm     -lgomp"/>
+  <configure name="LIB_VERSION_NUMBER" value="7,0,8,24"/>
+  <configure name="LIB_VERSION" value="0x708"/>
+  <configure name="NAME" value="ImageMagick"/>
+  <configure name="PCFLAGS" value="-DMAGICKCORE_HDRI_ENABLE=1 -DMAGICKCORE_QUANTUM_DEPTH=16"/>
+  <configure name="PREFIX" value="/var/task/imagemagick/new2"/>
+  <configure name="QuantumDepth" value="16"/>
+  <configure name="RELEASE_DATE" value="2019-01-18"/>
+  <configure name="SHAREARCH_PATH" value="/var/task/imagemagick/new2/lib/ImageMagick-7.0.8/config-Q16HDRI"/>
+  <configure name="SHARE_PATH" value="/var/task/imagemagick/new2/share/ImageMagick-7"/>
+  <configure name="TARGET_CPU" value="x86_64"/>
+  <configure name="TARGET_OS" value="linux-gnu"/>
+  <configure name="TARGET_VENDOR" value="pc"/>
+  <configure name="VERSION" value="7.0.8"/>
+  <configure name="WEBSITE" value="https://imagemagick.org"/>
+</configuremap>

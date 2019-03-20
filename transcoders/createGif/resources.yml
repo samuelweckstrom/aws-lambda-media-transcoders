@@ -1,0 +1,49 @@
+Resources:
+  CreateGifBucket: # Create a bucket for GIFs
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:provider.environment.BUCKET_GIF}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            AllowedHeaders:
+              - "*"
+      AccessControl: PublicRead
+
+  CreateGifSubscription: # Subscribe Lambda to meadia source topic
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint:
+        Fn::GetAtt: [ CreateGifLambdaFunction , "Arn" ]
+      Protocol: lambda
+      TopicArn: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE_ARN}
+
+  CreateGifLambdaFunctionPermission: # Give topic permission to invoke Lambda
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: ${self:provider.environment.SNS_TOPIC_MEDIA_SOURCE_ARN}
+      FunctionName:
+        Fn::GetAtt: [ CreateGifLambdaFunction, "Arn" ]
+
+  CreateGifBucketPolicy: # Set public read permission for bucket
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:GetObject"
+            Resource:
+              - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateGifBucket", "Arn" ] }, "*" ]] }
+      Bucket:
+        Ref: "CreateGifBucket"

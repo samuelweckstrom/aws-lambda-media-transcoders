@@ -1,0 +1,614 @@
+{
+  "service": {
+    "service": "lambda-media-transcoder-thumbnails",
+    "serviceObject": {
+      "name": "lambda-media-transcoder-thumbnails"
+    },
+    "provider": {
+      "stage": "dev",
+      "region": "eu-central-1",
+      "variableSyntax": "\\${([ ~:a-zA-Z0-9._@'\",\\-\\/\\(\\)]+?)}",
+      "name": "aws",
+      "runtime": "nodejs8.10",
+      "versionFunctions": false,
+      "timeout": 10,
+      "memorySize": 512,
+      "package": {
+        "excludeDevDependencies": true,
+        "exclude": [
+          ".git/**",
+          ".vscode/**",
+          ".test/**"
+        ]
+      },
+      "environment": {
+        "REGION": "eu-central-1",
+        "BUCKET_THUMBNAILS": {
+          "Fn::Join": [
+            "-",
+            [
+              "dev",
+              "lambda-media-bucket-thumbnails"
+            ]
+          ]
+        },
+        "SNS_TOPIC_MEDIA_SOURCE": {
+          "Fn::Join": [
+            "-",
+            [
+              "dev",
+              "lambda-media-source-topic"
+            ]
+          ]
+        },
+        "SNS_TOPIC_MEDIA_SOURCE_ARN": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:sns:",
+              "eu-central-1",
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "$ref": "$[\"service\"][\"provider\"][\"environment\"][\"SNS_TOPIC_MEDIA_SOURCE\"]"
+              }
+            ]
+          ]
+        }
+      },
+      "iamRoleStatements": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject",
+            "s3:GetObject"
+          ],
+          "Resource": [
+            {
+              "Fn::Join": [
+                "/",
+                [
+                  {
+                    "Fn::GetAtt": [
+                      "CreateThumbnailsBucket",
+                      "Arn"
+                    ]
+                  },
+                  "*"
+                ]
+              ]
+            }
+          ]
+        }
+      ],
+      "remoteFunctionData": null,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "CreateThumbnailsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/lambda-media-transcoder-thumbnails-dev-createThumbnails"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "lambda-media-transcoder-thumbnails",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-media-transcoder-thumbnails-dev-createThumbnails:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lambda-media-transcoder-thumbnails-dev-createThumbnails:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iamRoleStatements\"][0]"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "lambda-media-transcoder-thumbnails",
+                    "dev",
+                    "eu-central-1",
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "CreateThumbnailsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/lambda-media-transcoder-thumbnails/dev/1553089970262-2019-03-20T13:52:50.262Z/lambda-media-transcoder-thumbnails.zip"
+              },
+              "FunctionName": "lambda-media-transcoder-thumbnails-dev-createThumbnails",
+              "Handler": "createThumbnails.handler",
+              "MemorySize": 512,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs8.10",
+              "Timeout": 10,
+              "Environment": {
+                "Variables": {
+                  "REGION": "eu-central-1",
+                  "BUCKET_THUMBNAILS": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "lambda-media-bucket-thumbnails"
+                      ]
+                    ]
+                  },
+                  "SNS_TOPIC_MEDIA_SOURCE": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "lambda-media-source-topic"
+                      ]
+                    ]
+                  },
+                  "SNS_TOPIC_MEDIA_SOURCE_ARN": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:sns:",
+                        "eu-central-1",
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId"
+                        },
+                        ":",
+                        {
+                          "Fn::Join": [
+                            "-",
+                            [
+                              "dev",
+                              "lambda-media-source-topic"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                }
+              },
+              "Layers": [
+                {
+                  "Fn::ImportValue": "FfmpegLambdaLayer"
+                }
+              ]
+            },
+            "DependsOn": [
+              "CreateThumbnailsLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "CreateThumbnailsBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "dev",
+                    "lambda-media-bucket-thumbnails"
+                  ]
+                ]
+              },
+              "CorsConfiguration": {
+                "CorsRules": [
+                  {
+                    "AllowedMethods": [
+                      "PUT",
+                      "GET",
+                      "POST",
+                      "HEAD"
+                    ],
+                    "AllowedOrigins": [
+                      "*"
+                    ],
+                    "AllowedHeaders": [
+                      "*"
+                    ]
+                  }
+                ]
+              },
+              "AccessControl": "PublicRead"
+            }
+          },
+          "CreateThumbnailsSubscription": {
+            "Type": "AWS::SNS::Subscription",
+            "Properties": {
+              "Endpoint": {
+                "Fn::GetAtt": [
+                  "CreateThumbnailsLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Protocol": "lambda",
+              "TopicArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:sns:",
+                    "eu-central-1",
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "dev",
+                          "lambda-media-source-topic"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            }
+          },
+          "CreateThumbnailsLambdaFunctionPermission": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "Action": "lambda:InvokeFunction",
+              "Principal": "sns.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:aws:sns:",
+                    "eu-central-1",
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "dev",
+                          "lambda-media-source-topic"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              },
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CreateThumbnailsLambdaFunction",
+                  "Arn"
+                ]
+              }
+            }
+          },
+          "CreateThumbnailsBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Sid": "PublicReadForGetBucketObjects",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": [
+                      "s3:GetObject"
+                    ],
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "/",
+                          [
+                            {
+                              "Fn::GetAtt": [
+                                "CreateThumbnailsBucket",
+                                "Arn"
+                              ]
+                            },
+                            "*"
+                          ]
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Bucket": {
+                "Ref": "CreateThumbnailsBucket"
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "pluginsData": {},
+    "functions": {
+      "createThumbnails": {
+        "handler": "createThumbnails.handler",
+        "layers": [
+          {
+            "Fn::ImportValue": "FfmpegLambdaLayer"
+          }
+        ],
+        "events": [],
+        "name": "lambda-media-transcoder-thumbnails-dev-createThumbnails",
+        "package": {},
+        "memory": 512,
+        "timeout": 10,
+        "runtime": "nodejs8.10",
+        "vpc": {}
+      }
+    },
+    "resources": {
+      "Resources": {
+        "CreateThumbnailsBucket": {
+          "Type": "AWS::S3::Bucket",
+          "Properties": {
+            "BucketName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "dev",
+                  "lambda-media-bucket-thumbnails"
+                ]
+              ]
+            },
+            "CorsConfiguration": {
+              "CorsRules": [
+                {
+                  "AllowedMethods": [
+                    "PUT",
+                    "GET",
+                    "POST",
+                    "HEAD"
+                  ],
+                  "AllowedOrigins": [
+                    "*"
+                  ],
+                  "AllowedHeaders": [
+                    "*"
+                  ]
+                }
+              ]
+            },
+            "AccessControl": "PublicRead"
+          }
+        },
+        "CreateThumbnailsSubscription": {
+          "Type": "AWS::SNS::Subscription",
+          "Properties": {
+            "Endpoint": {
+              "Fn::GetAtt": [
+                "CreateThumbnailsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Protocol": "lambda",
+            "TopicArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:sns:",
+                  "eu-central-1",
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "lambda-media-source-topic"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            }
+          }
+        },
+        "CreateThumbnailsLambdaFunctionPermission": {
+          "Type": "AWS::Lambda::Permission",
+          "Properties": {
+            "Action": "lambda:InvokeFunction",
+            "Principal": "sns.amazonaws.com",
+            "SourceArn": {
+              "Fn::Join": [
+                "",
+                [
+                  "arn:aws:sns:",
+                  "eu-central-1",
+                  ":",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  ":",
+                  {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "lambda-media-source-topic"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            },
+            "FunctionName": {
+              "Fn::GetAtt": [
+                "CreateThumbnailsLambdaFunction",
+                "Arn"
+              ]
+            }
+          }
+        },
+        "CreateThumbnailsBucketPolicy": {
+          "Type": "AWS::S3::BucketPolicy",
+          "Properties": {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Sid": "PublicReadForGetBucketObjects",
+                  "Effect": "Allow",
+                  "Principal": "*",
+                  "Action": [
+                    "s3:GetObject"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "/",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "CreateThumbnailsBucket",
+                              "Arn"
+                            ]
+                          },
+                          "*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "Bucket": {
+              "Ref": "CreateThumbnailsBucket"
+            }
+          }
+        }
+      },
+      "Outputs": {}
+    },
+    "layers": {},
+    "artifact": "/Users/sj/code/work/os-projects/lambda-media-transcoders/transcoders/createThumbnails/.serverless/lambda-media-transcoder-thumbnails.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/lambda-media-transcoder-thumbnails/dev/1553089970262-2019-03-20T13:52:50.262Z",
+    "artifact": "lambda-media-transcoder-thumbnails.zip"
+  }
+}

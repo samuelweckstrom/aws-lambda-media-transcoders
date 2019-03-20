@@ -1,0 +1,100 @@
+service: ${file(../project.env.yml):PROJECT_NAME}-transcoder
+
+provider:
+  name: aws
+  stage: dev
+  region: ${file(../project.env.yml):REGION}
+  runtime: nodejs8.10
+  versionFunctions: false
+  timeout: 10
+  memorySize: 512
+  deploymentBucket: ${self:provider.stage}-${file(../project.env.yml):DEPLOYMENT_BUCKET}
+  package:
+    excludeDevDependencies: true
+    exclude:
+      - .git/**
+      - .vscode/**
+      - .test/**
+  environment:
+    REGION: ${self:provider.region}
+    SNS_TOPIC_MEDIA_IN: 
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):SNS_TOPIC_MEDIA_IN}
+    SNS_TOPIC_CREATE_WATERMARKED: 
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):SNS_TOPIC_CREATE_WATERMARKED}
+    BUCKET_MEDIA_IN: 
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_MEDIA_IN}
+    BUCKET_GIF:
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_GIF}
+    BUCKET_MOBILE_VIDEO:
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_MOBILE_VIDEO}
+    BUCKET_WATERMARKED:
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_WATERMARKED}
+    BUCKET_THUMBNAILS:
+      Fn::Join:
+        - "-"
+        - - ${self:provider.stage}
+          - ${file(../project.env.yml):BUCKET_THUMBNAILS}
+    FFMPEG_LAYER_ARN:
+      Fn::ImportValue: FfmpegLambdaLayer
+    FFMPEG_LAYER_EXPORT: ${cf:first-impression-ffmpeg-layer-dev.FfmpegLayerExport}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource:
+        Ref: CreateWatermarkedTopic
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+        - s3:GetObject
+      Resource:
+        - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "MediaSourceBucket", "Arn" ] }, "*" ]] }
+        - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateGifBucket", "Arn" ] }, "*" ]] }
+        - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateMobileVideoBucket", "Arn" ] }, "*" ]] }
+        - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateThumbnailsBucket", "Arn" ] }, "*" ]] }
+        - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateWatermarkedBucket", "Arn" ] }, "*" ]] }
+
+functions:
+  createGif:
+    handler: handlers/createGif.run
+    layers:
+      - Fn::ImportValue: FfmpegLambdaLayer
+  createMobileVideo:
+    handler: handlers/createMobileVideo.run
+    layers:
+      - Fn::ImportValue: FfmpegLambdaLayer
+  createThumbnails:
+    handler: handlers/createThumbnails.run
+    layers:
+      - Fn::ImportValue: FfmpegLambdaLayer
+      - Fn::ImportValue: GraphicsmagickLambdaLayer
+  createWatermarked:
+    handler: handlers/createWatermarked.run
+    layers:
+      - Fn::ImportValue: FfmpegLambdaLayer
+      - Fn::ImportValue: GraphicsmagickLambdaLayer
+
+resources: # each file referenced here must be an object, so 'Resources' has to be defined in each file
+  - ${file(./resources/mediaSource.yml)} 
+  - ${file(./resources/createGif.yml)}
+  - ${file(./resources/createMobileVideo.yml)}
+  - ${file(./resources/createThumbnails.yml)}
+  - ${file(./resources/createWatermarked.yml)}
