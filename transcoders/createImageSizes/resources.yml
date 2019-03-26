@@ -1,0 +1,32 @@
+Resources:
+  CreateImageSizesBucket: # Create a bucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${self:provider.environment.BUCKET_IMAGE_SIZES}
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - GET
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - "*"
+            AllowedHeaders:
+              - "*"
+      AccessControl: PublicRead
+
+  CreateImageSizesBucketPolicy: # give public permission to access bucket contents
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadForGetBucketObjects
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - 's3:GetObject'
+            Resource:
+              - { "Fn::Join": [ "/", [ { "Fn::GetAtt": [ "CreateImageSizesBucket", "Arn" ] }, "*" ]] }
+      Bucket:
+        Ref: "CreateImageSizesBucket"
