@@ -1,0 +1,9 @@
+{
+  "groups": {
+    "default": {
+      "packages": [
+        "transcoders/package.json"
+      ]
+    }
+  }
+}
